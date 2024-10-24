@@ -43,7 +43,7 @@ const ExamTimerApp = () => {
       audioRef.current.play();
     }
     setIsAlarming(true);
-    setTimeout(() => setIsAlarming(false), 3000); // Reset after 3 seconds
+    setTimeout(() => setIsAlarming(false), 3000);
   };
 
   const formatTime = (time) => {
@@ -52,10 +52,17 @@ const ExamTimerApp = () => {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  const getSecondsUntilNextQuestion = (time) => {
+    if (time <= 44) return null; // Return null for last question
+    const currentQuestionNumber = Math.floor((180 - time) / 34) + 1;
+    const nextQuestionTime = 180 - (currentQuestionNumber * 34);
+    return time - nextQuestionTime;
+  };
+
   const handleStart = (part) => {
     setActiveTimer(part);
     setIsRunning(true);
-    setIsAlarming(false); // Stop any ongoing alarm
+    setIsAlarming(false);
   };
 
   const handlePause = () => {
@@ -64,7 +71,7 @@ const ExamTimerApp = () => {
 
   const handleStop = (part) => {
     setIsRunning(false);
-    setIsAlarming(false); // Stop any ongoing alarm
+    setIsAlarming(false);
     if (part === 'part1') setPart1Time(180);
     if (part === 'part2') setPart2Time(210);
     if (part === 'part3') setPart3Time(210);
@@ -72,8 +79,22 @@ const ExamTimerApp = () => {
 
   const getPartCue = (part, time) => {
     if (part === 'part1') {
-      const questionNumber = Math.floor((180 - time) / 36) + 1;
-      return `You should be at Question ${questionNumber}`;
+      if (time > 44) {
+        const questionNumber = Math.floor((180 - time) / 34) + 1;
+        const secondsUntilNext = getSecondsUntilNextQuestion(time);
+        return (
+          <div className="flex items-center space-x-4">
+            {secondsUntilNext !== null && (
+              <div className="text-red-600 font-mono">
+                {secondsUntilNext}s until Q{questionNumber + 1}!!!!   +++=============+++
+              </div>
+            )}
+            <div>You should be at Question {questionNumber}</div>
+          </div>
+        );
+      } else {
+        return <span className="text-red-800 animate-pulse">LAST QUESTION !!! LAST QUESTION !!!</span>;
+      }
     } else if (part === 'part2' || part === 'part3') {
       if (time > 150) return 'You should be at 1 tense';
       if (time > 90) return 'You should be at 2 tenses';
